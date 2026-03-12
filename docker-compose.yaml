@@ -1,0 +1,76 @@
+services:
+  backend:
+    container_name: px-be
+    build:
+      context: .
+      target: prod
+    env_file:
+      - .env
+    restart: on-failure
+    volumes:
+      - ./app:/app/app:z
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    command: bash -c "
+      alembic upgrade head &&
+      uvicorn app.app:app --host 0.0.0.0 --port 8000 --reload
+      "
+    healthcheck:
+      test: [
+        "CMD", "python", "-c",
+        "import http.client;
+        conn = http.client.HTTPConnection('localhost', 8000);
+        conn.request('GET', '/api/v1/health');
+        r = conn.getresponse();
+        conn.close();
+        r.status >= 400 and exit(1) or exit(0)"
+      ]
+      interval: 60s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  postgres:
+    container_name: px-pg
+    image: postgres:17.4
+    restart: on-failure
+    environment:
+      - ENV=local
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=px
+      - PGUSER=postgres
+      - PGPASSWORD=password
+    ports:
+      - "5432:5432"
+    volumes:
+      - px-pg-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready" ]
+      interval: 1s
+      timeout: 30s
+      retries: 30
+
+  test:
+    container_name: px-be-test
+    build:
+      context: .
+      target: test
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app:z
+      - ./tests:/app/tests:z
+      - ./pytest.ini:/app/pytest.ini:z
+      - ./pyproject.toml:/app/pyproject.toml:z
+    depends_on:
+      - postgres
+    command: bash -c "
+      coverage run -m pytest && coverage report -m
+      "
+
+volumes:
+  px-pg-volume:

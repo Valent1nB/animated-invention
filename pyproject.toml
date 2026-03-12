@@ -1,0 +1,83 @@
+[project]
+name = "project-x"
+version = "0.1.0"
+description = "Demo project"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.17.2",
+    "asyncpg>=0.31.0",
+    "boto3>=1.35.0",
+    "fastapi-users[oauth,sqlalchemy]>=15.0.1",
+    "fastapi-users-db-sqlalchemy>=7.0.0",
+    "fastapi[standard]>=0.123.0",
+    "loguru>=0.7.3",
+    "pydantic-settings>=2.12.0",
+    "sqlalchemy>=2.0.44",
+    "python-dateutil>=2.9.0.post0",
+    "types-python-dateutil>=2.9.0.20251115",
+]
+
+[dependency-groups]
+dev = [
+    "mypy>=1.19.0",
+    "pre-commit>=4.5.0",
+    "pytest>=9.0.1",
+    "coverage>=7.12.0",
+    "pytest-asyncio>=1.2.0",
+    "ruff>=0.14.4",
+    "detect-secrets>=1.5.0",
+    "pre-commit>=4.5.0",
+    "factory-boy>=3.3.3",
+]
+
+[tool.ruff]
+line-length=120
+indent-width = 4
+extend-exclude = ["__init__.py", "versions"]
+target-version = "py312"
+
+[tool.ruff.lint]
+extend-select = ["I", "F", "E"]
+
+[tool.ruff.format]
+quote-style = "double"
+line-ending = "auto"
+
+[tool.mypy]
+implicit_optional = true
+ignore_missing_imports = true
+plugins = "pydantic.mypy"
+show_error_codes = true
+follow_imports = "silent"
+warn_redundant_casts = true
+warn_unused_ignores = true
+check_untyped_defs = true
+implicit_reexport = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "session"
+asyncio_default_test_loop_scope = "session"
+filterwarnings = [
+    "ignore:datetime.datetime.utcnow()"
+]
+
+[tool.coverage.run]
+branch = true
+source = ["app"]
+omit = [
+    "app/__init__.py",
+    "app/*/__init__.py",
+    "app/migrations/*",
+    "tests/*"
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+]
